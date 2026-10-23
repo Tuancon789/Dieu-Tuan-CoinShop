@@ -1,15 +1,26 @@
-# Coin Shop v0.5
+# Dynamic Pill Pro — Android
 
-Language and currency display are linked:
-- Vietnamese (VI): show prices and wallet balance in **VND**.
-- English (EN): show the same amounts as **approximate USD**, formatted `≈$0.00`.
-- Indicative fixed reference: **1 USD = 25,850 VND (October 23, 2026)**. This is not a live exchange rate and is **not** an USD account.
-- Purchases and wallet balances always remain denominated **VND in local device storage**. Switching languages does not exchange, credit, or debit funds.
-- ADMIN credit amount input follows the selected language: VND integer in Vietnamese, approximate USD decimal in English (converted to VND for wallet credit).
-- Customer prices, custom-quantity sheet, wallet, checkout confirmation, success screen, orders and ADMIN balances all share one currency presentation formatter.
+Black iPhone-inspired dynamic pill overlay for Android, without using Accessibility Service, screen recording, internet, or analytics. Separate new Android app from Coin Shop.
 
-## Limitations
-The app currently has an **on-device offline wallet**, not a shared server wallet or a licensed payment provider. ADMIN can only manage accounts stored on the same phone. The illustrative $10 million ADMIN amount is display-only, not spendable money. Wallet payment success is only a local-wallet transaction; it does not establish TikTok coin fulfillment. Do not use this version for real customer funds.
+## Main capabilities
+- Compact black floating pill, tap to expand/collapse; user can turn it off
+- Media playback label and play/pause/skip controls using Android MediaSessionManager when a compatible media session is available
+- Incoming notification toast from apps you allow via Android notification access; by default only app name is displayed (notification previews must be opted into in app)
+- Charging event with battery percentage
+- On/off preference and a preview command
+- Source-only Android Java app with a GitHub Actions debug APK build
 
-## Android build
-GitHub Actions → Build APK Coin Shop → latest successful run → artifact `CoinShop-v0.5-debug` → extract `app-debug.apk`.
+## Permissions & privacy
+- **Display over other apps**: Android SYSTEM_ALERT_WINDOW; needed to show the pill overlay, must be granted manually.
+- **Notification access**: enables music session metadata, controls and other app notifications. Powerful permission — only grant if you trust the app. Notification content stays on device; app contains no network permission. Preview contents are off by default.
+- Notifications and MediaSession control depend on apps and the phone OS. On Android, `TYPE_APPLICATION_OVERLAY` appears **under critical system windows** including the status bar; it cannot exactly reproduce the native iPhone camera cutout effect.
+- The overlay is hosted in Android's NotificationListenerService. The OS can disconnect/kill it during aggressive battery optimization, so uptime is not guaranteed; user may need to re-enable the service.
+- To uninstall, disable overlay in app and revoke notification permission in system settings.
+
+## Build
+On GitHub open Actions → **Build Dynamic Pill APK** → Run workflow. Download Artifact **DynamicPillPro-v1-debug** and extract **app-debug.apk**.
+
+Gradle 8.9, Android Gradle Plugin 8.7.3, Java 17, compileSdk 35, minSdk 26, targetSdk 34. No third-party runtime dependencies.
+
+## Project branch
+The connected GitHub access cannot create a repository. This self-contained project is kept in the dedicated `dynamic-pill` branch of the existing repository; the `main` branch remains Coin Shop. The source tree of `dynamic-pill` contains only Dynamic Pill Pro files. Do not merge it into Coin Shop.

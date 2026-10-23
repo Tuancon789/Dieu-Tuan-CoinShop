@@ -1,2 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources><string name="app_name">Coin Shop</string></resources>
+<resources>
+    <string name="app_name">Dynamic Pill Pro</string>
+    <string name="listener_description">Hiển thị thông báo và trạng thái nhạc trên viên thuốc nổi. Nội dung thông báo được ẩn theo mặc định.</string>
+</resources>

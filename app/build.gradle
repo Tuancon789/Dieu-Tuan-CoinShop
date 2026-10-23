@@ -1,13 +1,13 @@
 plugins { id 'com.android.application' }
 android {
-    namespace 'vn.dieutuan.coinshop'
+    namespace 'vn.dieutuan.dynamicpill'
     compileSdk 35
     defaultConfig {
-        applicationId 'vn.dieutuan.coinshop'
-        minSdk 24
+        applicationId 'vn.dieutuan.dynamicpill'
+        minSdk 26
         targetSdk 34
-        versionCode 5
-        versionName '0.5.0'
+        versionCode 1
+        versionName '1.0.0'
     }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
