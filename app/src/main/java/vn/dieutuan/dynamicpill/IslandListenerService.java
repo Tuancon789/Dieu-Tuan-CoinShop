@@ -23,6 +23,7 @@ import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.text.TextUtils;
 import android.view.Gravity;
+import android.os.Build;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
@@ -199,8 +200,20 @@ public class IslandListenerService extends NotificationListenerService {
                 dp(148),WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN|
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.TRANSLUCENT);
+            // An overlay normally starts below the status bar. Request a full-screen
+            // coordinate space and permission to enter the display-cutout region.
+            if(Build.VERSION.SDK_INT>=30){
+                layout.layoutInDisplayCutoutMode=
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+                layout.setFitInsetsTypes(0);
+            }else if(Build.VERSION.SDK_INT>=28){
+                layout.layoutInDisplayCutoutMode=
+                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            }
             layout.gravity=Gravity.TOP|Gravity.LEFT;
             updatePosition(false);
             windows.addView(pill,layout);
@@ -317,7 +330,14 @@ public class IslandListenerService extends NotificationListenerService {
         layout.gravity=Gravity.TOP|Gravity.LEFT;
         layout.x=Math.max(0,Math.min(screen-width,camera-width/2+
             dp(prefs.getInt("offset_x_dp",0))));
-        layout.y=dp(7+prefs.getInt("offset_y_dp",0));
+        // Compensate for the status-bar origin on devices where the Android
+        // overlay coordinate system still begins below system decorations.
+        // FLAG_LAYOUT_NO_LIMITS lets y be negative on compatible firmware.
+        int barHeight=0;
+        int identifier=getResources().getIdentifier("status_bar_height","dimen","android");
+        if(identifier>0)barHeight=getResources().getDimensionPixelSize(identifier);
+        int baseY=barHeight>0?-barHeight:0;
+        layout.y=baseY+dp(3+prefs.getInt("offset_y_dp",0));
     }
     private void removePill(){
         ++notificationSequence;ephemeralIcon="";ephemeralText="";ephemeralDetail="";

@@ -1,22 +1,18 @@
-# Dynamic Pill Pro v1.1
+# Dynamic Pill Pro v1.2
 
-Android overlay inspired by iPhone's black Dynamic Island. The project is separate from Coin Shop and maintained only on the `dynamic-pill` branch.
+Android camera-aligned dynamic island inspired overlay, kept on branch `dynamic-pill` (Coin Shop remains on main).
 
-## Updates in v1.1
-- Detect the center of the display cutout (where Android provides that information), plus manual ±5 dp horizontal/vertical adjustment and width resizing.
-- A user-enabled **foreground service** shows an ongoing notification to keep the process alive after leaving the app or removing the Activity from recents.
-- `BootReceiver` attempts to restart service after a reboot or app update when enabled and allowed by the phone.
-- Notification on lock screen: displays an ongoing service notification if the user allows lock-screen notifications. Overlay itself may not be visible above Android's keyguard; `TYPE_APPLICATION_OVERLAY` is below critical system windows including status bar.
-- MediaSession metadata and controls from apps supporting standard Android sessions; notification listener and charging updates; message previews disabled by default.
-- Permission buttons, battery optimization settings shortcut and preview action.
+## v1.2 camera fix
+- Earlier builds placed `TYPE_APPLICATION_OVERLAY` below the status bar, and moving the y coordinate alone could not overcome cutout avoidance.
+- The Android window now requests `FLAG_LAYOUT_IN_SCREEN | FLAG_LAYOUT_NO_LIMITS`, and `layoutInDisplayCutoutMode=ALWAYS` on API 30+, with `SHORT_EDGES` on API 28–29.
+- Requests zero fit insets (API 30+) and an origin corrected by the status-bar height. The result depends on OEM system-window policy.
+- Quick **ĐẶT VIÊN THUỐC SÁT CAMERA** position reset, manual directional adjustments in 10 dp steps (vertical −100 to 150 dp), adjustable pill width.
+- These Android flags do not grant privileged status-bar or keyguard privileges. Some manufacturers still draw the status bar over the app or clip its overlay. The only guaranteed area is the permitted region below system chrome.
 
-## Limitations
-Android may terminate a foreground service for battery optimization, force-stop, OEM restrictions or user action. **No third-party Android app can guarantee uninterrupted background operation** on every device. A new reboot may be restricted by Android's foreground-service rules. Check Android's app battery settings and allow background operation/auto-start when needed.
-
-The display cutout bounds are approximate. Android status bar and lock screen may cover the camera area, and the app cannot reproduce the exact native iPhone island. Lock screen notifications contain no private message contents.
-
-### Permissions
-Display over other apps; notification listener access; notification posting (Android 13+) for persistent status; foreground service; receive boot completed. No internet permission, no screen capture or Accessibility service.
+## Other features
+- Ongoing foreground notification and Android foreground service, keeps operating after leaving Activity when system allows, restart attempt after boot.
+- Media session listening and controls, charging indicator, new notification summary with private contents hidden by default.
+- No Internet, no screen recording, no accessibility service.
 
 ## Build
-GitHub Actions → Build Dynamic Pill APK on branch `dynamic-pill`, download `DynamicPillPro-v1.1-debug`, extract `app-debug.apk`.
+GitHub Actions on branch `dynamic-pill` -> successful Build Dynamic Pill APK -> download `DynamicPillPro-v1.2-debug`, extract `app-debug.apk`.
