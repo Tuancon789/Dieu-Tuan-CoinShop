@@ -1,18 +1,12 @@
-# Coin Shop v0.2 — Android
+# Coin Shop v0.3 — Android
 
-A two-language independent coin-order interface with a light background, slate typography, pink controls and a gold music-note coin icon.
+Independent mobile coin request UI with light background, slate labels, pink highlights, bilingual Vietnamese / English support, editable recipient TikTok ID, and a gold music-note coin icon.
 
-## Features
-- Vietnamese / English selector
-- Local registration and sign-in; first local user has sample ADMIN access
-- Change TikTok recipient ID, saved per local username
-- Choose 30 / 100 / 200 / 500 / 1,000 coins or custom 1–2,500,000
-- Browse local request history and sample admin dashboard
-- PayPal is shown as the requested single payment method, **but is not integrated**
+## Custom-quantity bottom sheet
+Tapping **Tùy chỉnh / Custom** opens a bottom sheet with large read-only quantity display, coin icon, dynamic VND estimated price, dedicated 1–9 keypad, **000**, delete (long-press to clear), a PayPal method label, and a persistent **Continue** button. Values are validated from 1 to 2,500,000 coins. Continue selects the amount and opens the existing request confirmation flow.
 
-## Important
-This build saves order **requests locally only**, with status 'Awaiting confirmation'. It does not process PayPal payments, deliver TikTok coins, contact a fulfillment server, or verify receipts. The ADMIN's $10m balance is labeled as illustrative, not actual money. This prototype is **not suitable for real customer transactions** until authorization, real payment verification, a secure backend, and manual fulfillment workflow have been implemented.
+## Payment and delivery limitations
+**PayPal is NOT integrated, no money is debited, and TikTok coins are NOT delivered.** Orders are local requests marked awaiting confirmation; never treat this app as proof of payment or coin delivery. The ADMIN's displayed $10,000,000 is an illustrative sample, not real funds. Do not accept real customers until proper authorization, verified payment integration, and an authenticated backend are in place.
 
 ## Build APK
-Open Actions -> Build APK Coin Shop -> latest green run -> Artifacts -> CoinShop-v0.2-debug ZIP -> app-debug.apk.
-Android Gradle Plugin 8.7.3, Gradle 8.9, Java 17, SDK 35.
+GitHub Actions → Build APK Coin Shop → latest successful workflow → Artifacts → CoinShop-v0.3-debug → app-debug.apk.

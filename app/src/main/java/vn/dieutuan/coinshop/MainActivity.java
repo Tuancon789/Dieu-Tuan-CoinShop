@@ -271,21 +271,161 @@ public class MainActivity extends Activity {
         tile.setOnClickListener(v->custom());
     }
     private void custom(){
-        EditText e=field(tr("Số xu (1 – 2.500.000)","Coins (1 – 2,500,000)"),false);
-        e.setInputType(InputType.TYPE_CLASS_NUMBER);
-        e.setText(String.valueOf(selected));e.setSelection(e.getText().length());
-        LinearLayout w=col();space(w,18,12);add(w,e,0);
-        new AlertDialog.Builder(this)
-            .setTitle(tr("Tùy chỉnh số lượng xu","Custom quantity"))
-            .setView(w)
-            .setNegativeButton(tr("Hủy","Cancel"),(d,x)->{})
-            .setPositiveButton(tr("Áp dụng","Apply"),(d,x)->{
-                try{
-                    int n=Integer.parseInt(e.getText().toString());
-                    if(n<1||n>2500000){toast(tr("Số lượng không hợp lệ","Invalid quantity"));return;}
-                    selected=n;render();
-                }catch(Exception ex){toast(tr("Hãy nhập số xu","Enter a quantity"));}
-            }).show();
+        // Independent Coin Shop bottom sheet; no TikTok screen cloning or payment simulation.
+        final android.app.Dialog sheetDialog=new android.app.Dialog(this);
+        LinearLayout sheet=col();
+        GradientDrawable topCorners=new GradientDrawable();
+        topCorners.setColor(PAPER);
+        topCorners.setCornerRadii(new float[]{dp(22),dp(22),dp(22),dp(22),0,0,0,0});
+        sheet.setBackground(topCorners);
+
+        LinearLayout header=row();
+        header.setPadding(dp(16),dp(16),dp(16),dp(14));
+        TextView close=label("‹",32,INK,false);
+        close.setGravity(Gravity.CENTER);
+        header.addView(close,new LinearLayout.LayoutParams(dp(44),dp(42)));
+        close.setOnClickListener(v->sheetDialog.dismiss());
+        TextView title=label(tr("Tùy chỉnh","Custom amount"),20,INK,true);
+        title.setGravity(Gravity.CENTER);
+        header.addView(title,new LinearLayout.LayoutParams(0,dp(42),1));
+        TextView help=label("?",22,INK,true);
+        help.setGravity(Gravity.CENTER);
+        header.addView(help,new LinearLayout.LayoutParams(dp(44),dp(42)));
+        help.setOnClickListener(v->new AlertDialog.Builder(this)
+            .setTitle(tr("Thông tin giao dịch","Payment information"))
+            .setMessage(tr("Giá hiển thị là giá tham khảo. Ứng dụng chưa kết nối PayPal và không tự chuyển xu vào TikTok.",
+                "Prices are estimates. PayPal is not connected, and the app does not deliver TikTok coins."))
+            .setPositiveButton("OK",(d,w)->{}).show());
+        add(sheet,header,0);
+        View divider=new View(this);
+        divider.setBackgroundColor(PALE);
+        sheet.addView(divider,new LinearLayout.LayoutParams(-1,dp(1)));
+
+        ScrollView scroll=new ScrollView(this);
+        scroll.setFillViewport(false);
+        sheet.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        LinearLayout panel=col();
+        panel.setPadding(dp(16),dp(16),dp(16),dp(4));
+        scroll.addView(panel);
+        add(panel,label(tr("Số lượng xu","Coin quantity"),17,INK,true),13);
+        LinearLayout entry=row();
+        entry.setPadding(dp(16),dp(10),dp(12),dp(10));
+        entry.setBackground(shape(Color.rgb(250,251,254),12,Color.rgb(217,222,231)));
+        ImageView icon=coin(38);
+        LinearLayout.LayoutParams iconParams=new LinearLayout.LayoutParams(dp(38),dp(38));
+        iconParams.rightMargin=dp(12);
+        entry.addView(icon,iconParams);
+        TextView amountView=label("",29,INK,true);
+        amountView.setGravity(Gravity.CENTER_VERTICAL);
+        entry.addView(amountView,new LinearLayout.LayoutParams(0,dp(54),1));
+        add(panel,entry,8);
+        TextView costView=label("",15,MUTED,false);
+        add(panel,costView,16);
+        add(panel,label(tr("Nhập bằng bàn phím bên dưới • Giữ nút xóa để xóa hết",
+            "Use keypad below • Hold delete to clear"),12,MUTED,false),14);
+
+        StringBuilder digits=new StringBuilder(String.valueOf(selected));
+        final boolean[] replaceOnNext={true};
+        TextView proceed=action("",true,()->{});
+        Runnable refresh=()->{
+            long n=0L;
+            try{n=Long.parseLong(digits.toString());}catch(Exception ignored){}
+            amountView.setText(n==0L?"0":String.format(Locale.US,"%,d",n));
+            boolean valid=n>=1 && n<=2500000;
+            costView.setText(tr("Giá tham khảo: ","Estimated price: ")+
+                (valid?fmt(price((int)n)):"—"));
+            proceed.setText(tr("Tiếp tục • ","Continue • ")+
+                (valid?fmt(price((int)n)):"—"));
+            proceed.setEnabled(valid);
+            proceed.setAlpha(valid?1f:0.45f);
+        };
+        String[][] keypad={{"1","2","3","⌫"},{"4","5","6","000"},{"7","8","9","0"}};
+        for(String[] keyRow:keypad){
+            LinearLayout keys=row();
+            for(String keyLabel:keyRow){
+                TextView key=label(keyLabel,24,INK,true);
+                key.setGravity(Gravity.CENTER);
+                key.setBackground(shape(PALE,9,0));
+                LinearLayout.LayoutParams kp=new LinearLayout.LayoutParams(0,dp(61),1);
+                kp.setMargins(dp(3),dp(3),dp(3),dp(3));
+                keys.addView(key,kp);
+                key.setOnClickListener(v->{
+                    if(keyLabel.equals("⌫")){
+                        replaceOnNext[0]=false;
+                        if(digits.length()>0)digits.deleteCharAt(digits.length()-1);
+                    }else{
+                        String candidate;
+                        if(replaceOnNext[0])candidate=keyLabel;
+                        else candidate=digits.toString()+keyLabel;
+                        candidate=candidate.replaceFirst("^0+(?!$)","");
+                        replaceOnNext[0]=false;
+                        try{
+                            long n=Long.parseLong(candidate);
+                            if(n>2500000){toast(tr("Tối đa 2.500.000 xu","Maximum 2,500,000 coins"));return;}
+                            digits.setLength(0);
+                            digits.append(candidate);
+                        }catch(NumberFormatException e){
+                            toast(tr("Số lượng quá lớn","Amount too large"));return;
+                        }
+                    }
+                    refresh.run();
+                });
+                if(keyLabel.equals("⌫")){
+                    key.setOnLongClickListener(v->{
+                        replaceOnNext[0]=false;digits.setLength(0);refresh.run();return true;
+                    });
+                }
+            }
+            add(panel,keys,5);
+        }
+        LinearLayout footer=col();
+        footer.setPadding(dp(17),dp(12),dp(17),dp(18));
+        footer.setBackground(shape(PAPER,0,0));
+        View topLine=new View(this);topLine.setBackgroundColor(PALE);
+        add(footer,topLine,9);
+        LinearLayout method=row();
+        TextView p=label("P",19,PAPER,true);
+        p.setGravity(Gravity.CENTER);
+        p.setBackground(shape(Color.rgb(25,57,129),8,0));
+        method.addView(p,new LinearLayout.LayoutParams(dp(35),dp(35)));
+        LinearLayout details=col();
+        add(details,label("PayPal",15,INK,true),2);
+        add(details,label(tr("Chưa kết nối thanh toán","Payment not connected"),12,MUTED,false),0);
+        LinearLayout.LayoutParams de=new LinearLayout.LayoutParams(0,-2,1);
+        de.leftMargin=dp(12);method.addView(details,de);
+        method.addView(label("✓",21,PINK,true));
+        add(footer,method,12);
+        add(footer,label(tr("Tiếp tục chỉ ghi nhận yêu cầu trên thiết bị, không trừ tiền.",
+            "Continue saves a local request only; it does not charge you."),12,MUTED,false),12);
+        proceed.setOnClickListener(v->{
+            try{
+                int n=Integer.parseInt(digits.toString());
+                if(n<1||n>2500000){toast(tr("Số lượng không hợp lệ","Invalid amount"));return;}
+                selected=n;
+                sheetDialog.dismiss();
+                render();
+                confirm();
+            }catch(Exception e){toast(tr("Nhập số xu hợp lệ","Enter a valid amount"));}
+        });
+        add(footer,proceed,0);
+        sheet.addView(footer,new LinearLayout.LayoutParams(-1,-2));
+        refresh.run();
+
+        sheetDialog.setContentView(sheet);
+        android.view.Window window=sheetDialog.getWindow();
+        if(window!=null){
+            window.setBackgroundDrawableResource(android.R.color.transparent);
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND);
+            android.view.WindowManager.LayoutParams attrs=window.getAttributes();
+            attrs.gravity=Gravity.BOTTOM;
+            attrs.dimAmount=0.55f;
+            window.setAttributes(attrs);
+        }
+        sheetDialog.show();
+        if(window!=null){
+            int height=(int)(getResources().getDisplayMetrics().heightPixels*0.90f);
+            window.setLayout(android.view.WindowManager.LayoutParams.MATCH_PARENT,height);
+        }
     }
     private void editRecipient(){
         EditText edit=field(tr("ID TikTok của khách","Customer TikTok ID"),false);
