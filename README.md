@@ -1,26 +1,22 @@
-# Dynamic Pill Pro — Android
+# Dynamic Pill Pro v1.1
 
-Black iPhone-inspired dynamic pill overlay for Android, without using Accessibility Service, screen recording, internet, or analytics. Separate new Android app from Coin Shop.
+Android overlay inspired by iPhone's black Dynamic Island. The project is separate from Coin Shop and maintained only on the `dynamic-pill` branch.
 
-## Main capabilities
-- Compact black floating pill, tap to expand/collapse; user can turn it off
-- Media playback label and play/pause/skip controls using Android MediaSessionManager when a compatible media session is available
-- Incoming notification toast from apps you allow via Android notification access; by default only app name is displayed (notification previews must be opted into in app)
-- Charging event with battery percentage
-- On/off preference and a preview command
-- Source-only Android Java app with a GitHub Actions debug APK build
+## Updates in v1.1
+- Detect the center of the display cutout (where Android provides that information), plus manual ±5 dp horizontal/vertical adjustment and width resizing.
+- A user-enabled **foreground service** shows an ongoing notification to keep the process alive after leaving the app or removing the Activity from recents.
+- `BootReceiver` attempts to restart service after a reboot or app update when enabled and allowed by the phone.
+- Notification on lock screen: displays an ongoing service notification if the user allows lock-screen notifications. Overlay itself may not be visible above Android's keyguard; `TYPE_APPLICATION_OVERLAY` is below critical system windows including status bar.
+- MediaSession metadata and controls from apps supporting standard Android sessions; notification listener and charging updates; message previews disabled by default.
+- Permission buttons, battery optimization settings shortcut and preview action.
 
-## Permissions & privacy
-- **Display over other apps**: Android SYSTEM_ALERT_WINDOW; needed to show the pill overlay, must be granted manually.
-- **Notification access**: enables music session metadata, controls and other app notifications. Powerful permission — only grant if you trust the app. Notification content stays on device; app contains no network permission. Preview contents are off by default.
-- Notifications and MediaSession control depend on apps and the phone OS. On Android, `TYPE_APPLICATION_OVERLAY` appears **under critical system windows** including the status bar; it cannot exactly reproduce the native iPhone camera cutout effect.
-- The overlay is hosted in Android's NotificationListenerService. The OS can disconnect/kill it during aggressive battery optimization, so uptime is not guaranteed; user may need to re-enable the service.
-- To uninstall, disable overlay in app and revoke notification permission in system settings.
+## Limitations
+Android may terminate a foreground service for battery optimization, force-stop, OEM restrictions or user action. **No third-party Android app can guarantee uninterrupted background operation** on every device. A new reboot may be restricted by Android's foreground-service rules. Check Android's app battery settings and allow background operation/auto-start when needed.
+
+The display cutout bounds are approximate. Android status bar and lock screen may cover the camera area, and the app cannot reproduce the exact native iPhone island. Lock screen notifications contain no private message contents.
+
+### Permissions
+Display over other apps; notification listener access; notification posting (Android 13+) for persistent status; foreground service; receive boot completed. No internet permission, no screen capture or Accessibility service.
 
 ## Build
-On GitHub open Actions → **Build Dynamic Pill APK** → Run workflow. Download Artifact **DynamicPillPro-v1-debug** and extract **app-debug.apk**.
-
-Gradle 8.9, Android Gradle Plugin 8.7.3, Java 17, compileSdk 35, minSdk 26, targetSdk 34. No third-party runtime dependencies.
-
-## Project branch
-The connected GitHub access cannot create a repository. This self-contained project is kept in the dedicated `dynamic-pill` branch of the existing repository; the `main` branch remains Coin Shop. The source tree of `dynamic-pill` contains only Dynamic Pill Pro files. Do not merge it into Coin Shop.
+GitHub Actions → Build Dynamic Pill APK on branch `dynamic-pill`, download `DynamicPillPro-v1.1-debug`, extract `app-debug.apk`.

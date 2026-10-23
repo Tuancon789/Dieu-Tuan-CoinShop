@@ -201,8 +201,8 @@ public class IslandListenerService extends NotificationListenerService {
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
-            layout.gravity=Gravity.TOP|Gravity.CENTER_HORIZONTAL;
-            layout.y=dp(7);
+            layout.gravity=Gravity.TOP|Gravity.LEFT;
+            updatePosition(false);
             windows.addView(pill,layout);
             attached=true;
             updatePill();
@@ -300,10 +300,24 @@ public class IslandListenerService extends NotificationListenerService {
         playButton.setText(mediaPlaying()?"⏸":"▶");
         controls.setVisibility(media?View.VISIBLE:View.GONE);
         details.setVisibility(expanded?View.VISIBLE:View.GONE);
-        layout.width=dp(expanded?312:148);
+        updatePosition(expanded);
         if(windows!=null){
             try{windows.updateViewLayout(pill,layout);}catch(Exception ignored){}
         }
+    }
+    private void updatePosition(boolean wide){
+        if(layout==null||prefs==null)return;
+        int w=prefs.getInt("pill_width_dp",148);
+        w=Math.max(100,Math.min(250,w));
+        int width=dp(wide?Math.max(312,w+150):w);
+        int screen=getResources().getDisplayMetrics().widthPixels;
+        int camera=prefs.getInt("camera_center_px",-1);
+        if(camera<=0||camera>screen)camera=screen/2;
+        layout.width=width;
+        layout.gravity=Gravity.TOP|Gravity.LEFT;
+        layout.x=Math.max(0,Math.min(screen-width,camera-width/2+
+            dp(prefs.getInt("offset_x_dp",0))));
+        layout.y=dp(7+prefs.getInt("offset_y_dp",0));
     }
     private void removePill(){
         ++notificationSequence;ephemeralIcon="";ephemeralText="";ephemeralDetail="";
