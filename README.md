@@ -1,18 +1,17 @@
-# Dynamic Pill Pro v1.2
+# Dynamic Pill Pro v1.3 — stable Android overlay
 
-Android camera-aligned dynamic island inspired overlay, kept on branch `dynamic-pill` (Coin Shop remains on main).
+The v1.2 full-screen-cutout flags caused real problems on Android 14 / some OEM firmware: disappearing pill and system status icons drawn in front of music details.
 
-## v1.2 camera fix
-- Earlier builds placed `TYPE_APPLICATION_OVERLAY` below the status bar, and moving the y coordinate alone could not overcome cutout avoidance.
-- The Android window now requests `FLAG_LAYOUT_IN_SCREEN | FLAG_LAYOUT_NO_LIMITS`, and `layoutInDisplayCutoutMode=ALWAYS` on API 30+, with `SHORT_EDGES` on API 28–29.
-- Requests zero fit insets (API 30+) and an origin corrected by the status-bar height. The result depends on OEM system-window policy.
-- Quick **ĐẶT VIÊN THUỐC SÁT CAMERA** position reset, manual directional adjustments in 10 dp steps (vertical −100 to 150 dp), adjustable pill width.
-- These Android flags do not grant privileged status-bar or keyguard privileges. Some manufacturers still draw the status bar over the app or clip its overlay. The only guaranteed area is the permitted region below system chrome.
+## Fix
+- Remove forced cutout, full-screen and no-limits window flags.
+- Use a normal TYPE_APPLICATION_OVERLAY at the top of the allowed overlay area **under the status bar**, avoiding icon overlap.
+- Keep horizontal camera-cutout centering where Android reports the location; allow manual x/y shift and width adjustment, but clamp vertical y to the safe region.
+- Add **KHÔI PHỤC VỊ TRÍ & HIỆN VIÊN THUỐC** and **HIỆN LẠI VIÊN THUỐC**. Recreate the overlay window from scratch without disabling and re-enabling the app.
+- Record last known overlay status in local preferences for troubleshooting.
+- Retain existing foreground service, media session, notification listener, battery charging and restart attempt after reboot.
 
-## Other features
-- Ongoing foreground notification and Android foreground service, keeps operating after leaving Activity when system allows, restart attempt after boot.
-- Media session listening and controls, charging indicator, new notification summary with private contents hidden by default.
-- No Internet, no screen recording, no accessibility service.
+## Limitation
+Third-party TYPE_APPLICATION_OVERLAY cannot reliably draw above Android status-bar icons, physical camera cutout or lock screen; positioning in the normal overlay area is the stable fallback. Nothing bypasses Android's system permission restrictions.
 
 ## Build
-GitHub Actions on branch `dynamic-pill` -> successful Build Dynamic Pill APK -> download `DynamicPillPro-v1.2-debug`, extract `app-debug.apk`.
+Branch `dynamic-pill`, Build Dynamic Pill APK workflow → artifact `DynamicPillPro-v1.3-debug`. Requires Android 8+, Java 17 and standard Android permissions.

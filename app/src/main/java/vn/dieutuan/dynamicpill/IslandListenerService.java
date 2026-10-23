@@ -35,6 +35,7 @@ public class IslandListenerService extends NotificationListenerService {
     public static final String PREFS="dynamic_pill_prefs";
     public static final String ACTION_REFRESH="vn.dieutuan.dynamicpill.REFRESH";
     public static final String ACTION_PREVIEW="vn.dieutuan.dynamicpill.PREVIEW";
+    public static final String ACTION_RECREATE="vn.dieutuan.dynamicpill.RECREATE";
 
     private static final int WHITE=0xFFF7F8FA, MUTED=0xFF9BA6B5, GREEN=0xFF63E6BE;
     private final Handler ui=new Handler(Looper.getMainLooper());
@@ -88,13 +89,15 @@ public class IslandListenerService extends NotificationListenerService {
         commands=new BroadcastReceiver(){
             @Override public void onReceive(Context context, Intent intent){
                 if(ACTION_REFRESH.equals(intent.getAction()))refresh();
-                else if(ACTION_PREVIEW.equals(intent.getAction())){
+                else if(ACTION_RECREATE.equals(intent.getAction())){
+                    removePill();refresh();
+                }else if(ACTION_PREVIEW.equals(intent.getAction())){
                     ensurePill();
                     transientMessage("✦","Viên thuốc đang hoạt động","Chạm để mở rộng",5000);
                 }
             }
         };
-        IntentFilter cmd=new IntentFilter();cmd.addAction(ACTION_REFRESH);cmd.addAction(ACTION_PREVIEW);
+        IntentFilter cmd=new IntentFilter();cmd.addAction(ACTION_REFRESH);cmd.addAction(ACTION_PREVIEW);cmd.addAction(ACTION_RECREATE);
         if(Build.VERSION.SDK_INT>=33)registerReceiver(commands,cmd,Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(commands,cmd);
         batteryReceiver=new BroadcastReceiver(){
@@ -196,31 +199,25 @@ public class IslandListenerService extends NotificationListenerService {
             details.addView(controls,new LinearLayout.LayoutParams(-1,-2));
             pill.addView(details,new LinearLayout.LayoutParams(-1,-2));
             pill.setOnClickListener(v->{expanded=!expanded;updatePill();});
+            // On Android 14 the status-bar icons are layered above app overlays.
+            // Request the normal safe content area. Forcing cutout coordinates
+            // made the pill invisible or caused icons to cover the song text.
             layout=new WindowManager.LayoutParams(
                 dp(148),WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
-                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL|
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN|
-                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
                 PixelFormat.TRANSLUCENT);
-            // An overlay normally starts below the status bar. Request a full-screen
-            // coordinate space and permission to enter the display-cutout region.
-            if(Build.VERSION.SDK_INT>=30){
-                layout.layoutInDisplayCutoutMode=
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
-                layout.setFitInsetsTypes(0);
-            }else if(Build.VERSION.SDK_INT>=28){
-                layout.layoutInDisplayCutoutMode=
-                    WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-            }
             layout.gravity=Gravity.TOP|Gravity.LEFT;
             updatePosition(false);
             windows.addView(pill,layout);
             attached=true;
+            prefs.edit().putString("pill_status","VISIBLE").apply();
             updatePill();
         }catch(Exception ex){
             attached=false;
+            if(prefs!=null)prefs.edit().putString("pill_status",
+                "ERROR: "+ex.getClass().getSimpleName()).apply();
             if(pill!=null&&windows!=null){
                 try{windows.removeViewImmediate(pill);}catch(Exception ignored){}
             }
@@ -315,7 +312,11 @@ public class IslandListenerService extends NotificationListenerService {
         details.setVisibility(expanded?View.VISIBLE:View.GONE);
         updatePosition(expanded);
         if(windows!=null){
-            try{windows.updateViewLayout(pill,layout);}catch(Exception ignored){}
+            try{windows.updateViewLayout(pill,layout);}
+            catch(Exception e){
+                if(prefs!=null)prefs.edit().putString("pill_status",
+                    "ERROR: "+e.getClass().getSimpleName()).apply();
+            }
         }
     }
     private void updatePosition(boolean wide){
@@ -330,16 +331,11 @@ public class IslandListenerService extends NotificationListenerService {
         layout.gravity=Gravity.TOP|Gravity.LEFT;
         layout.x=Math.max(0,Math.min(screen-width,camera-width/2+
             dp(prefs.getInt("offset_x_dp",0))));
-        // Compensate for the status-bar origin on devices where the Android
-        // overlay coordinate system still begins below system decorations.
-        // FLAG_LAYOUT_NO_LIMITS lets y be negative on compatible firmware.
-        int barHeight=0;
-        int identifier=getResources().getIdentifier("status_bar_height","dimen","android");
-        if(identifier>0)barHeight=getResources().getDimensionPixelSize(identifier);
-        int baseY=barHeight>0?-barHeight:0;
-        layout.y=baseY+dp(3+prefs.getInt("offset_y_dp",0));
+        // Safe top origin: below Android status bar, never negative.
+        layout.y=dp(Math.max(6,8+prefs.getInt("offset_y_dp",0)));
     }
     private void removePill(){
+        if(prefs!=null)prefs.edit().putString("pill_status","HIDDEN").apply();
         ++notificationSequence;ephemeralIcon="";ephemeralText="";ephemeralDetail="";
         if(attached&&windows!=null&&pill!=null){
             try{windows.removeViewImmediate(pill);}catch(Exception ignored){}

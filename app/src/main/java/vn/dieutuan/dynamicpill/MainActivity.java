@@ -151,18 +151,16 @@ public class MainActivity extends Activity {
             12,MUTED,false),8);
         add(settings,text("Trái / phải: "+prefs.getInt("offset_x_dp",0)+" dp • cao / thấp: "+
             prefs.getInt("offset_y_dp",0)+" dp",13,WHITE,false),8);
-        add(settings,text("Chế độ sát camera đang bật: thử đặt viên thuốc trong vùng camera và thanh trạng thái. Android có thể vẫn che lớp phủ.",12,MUTED,false),9);
+        add(settings,text("Chế độ ổn định: viên thuốc nằm ngay bên dưới thanh trạng thái để không bị các biểu tượng che. Vẫn căn ngang theo camera.",12,MUTED,false),9);
         LinearLayout horizontal=new LinearLayout(this);
         horizontal.setOrientation(0);
         settingButton(horizontal,"←",()->adjust("offset_x_dp",-10,-160,160));
         settingButton(horizontal,"→",()->adjust("offset_x_dp",10,-160,160));
-        settingButton(horizontal,"↑",()->adjust("offset_y_dp",-10,-100,150));
-        settingButton(horizontal,"↓",()->adjust("offset_y_dp",10,-100,150));
+        settingButton(horizontal,"↑",()->adjust("offset_y_dp",-10,-2,150));
+        settingButton(horizontal,"↓",()->adjust("offset_y_dp",10,-2,150));
         add(settings,horizontal,9);
-        add(settings,button("ĐẶT VIÊN THUỐC SÁT CAMERA",false,()->{
-            prefs.edit().putInt("offset_x_dp",0).putInt("offset_y_dp",0).apply();
-            sendRefresh();draw();
-        }),12);
+        add(settings,button("KHÔI PHỤC VỊ TRÍ & HIỆN VIÊN THUỐC",false,()->restorePill()),10);
+        add(settings,text("Trạng thái: "+prefs.getString("pill_status","Chưa rõ")+" (lần gần nhất)",12,MUTED,false),12);
         add(settings,text("Độ rộng viên thuốc: "+prefs.getInt("pill_width_dp",148)+" dp",13,WHITE,false),7);
         LinearLayout widthButtons=new LinearLayout(this);
         widthButtons.setOrientation(0);
@@ -189,6 +187,7 @@ public class MainActivity extends Activity {
         }
         add(content,settings,15);
 
+        if(enabled)add(content,button("HIỆN LẠI VIÊN THUỐC",false,()->restorePill()),10);
         add(content,button(enabled?"TẮT VIÊN THUỐC":"BẬT VIÊN THUỐC",true,()->{
             if(!enabled&&(!Settings.canDrawOverlays(this)||!hasNotificationAccess())){
                 Toast.makeText(this,"Cấp đủ 2 quyền trước nhé",Toast.LENGTH_LONG).show();return;
@@ -208,7 +207,24 @@ public class MainActivity extends Activity {
             }
             sendCommand(IslandListenerService.ACTION_PREVIEW);
         }),13);
-        add(content,text("Bản v1.2 thử vị trí toàn màn hình và cho phép dịch viên thuốc qua vùng camera. Nếu ROM vẫn che bởi thanh trạng thái thì hệ thống không cấp quyền đè lên phần đó; chỉnh thêm có thể không hiệu quả. Thoát ứng dụng vẫn chạy nếu dịch vụ nền còn được Android cho phép.",12,MUTED,false),15);
+        add(content,text("v1.3 ưu tiên không bị thanh trạng thái che. Android 14 có thể không cho ứng dụng thường đè lên cụm camera trước; vì vậy viên thuốc nằm sát phía dưới thanh trạng thái. Chạy nền phụ thuộc cài đặt pin của máy.",12,MUTED,false),15);
+    }
+    private void restorePill(){
+        if(!Settings.canDrawOverlays(this)||!hasNotificationAccess()){
+            Toast.makeText(this,"Cần cấp quyền cửa sổ nổi và truy cập thông báo",Toast.LENGTH_LONG).show();
+            return;
+        }
+        prefs.edit().putBoolean("enabled",true).putInt("offset_x_dp",0)
+            .putInt("offset_y_dp",0).putInt("pill_width_dp",148)
+            .putString("pill_status","ĐANG KHÔI PHỤC").apply();
+        startPersistentService();
+        try{
+            android.service.notification.NotificationListenerService.requestRebind(
+                new ComponentName(this,IslandListenerService.class));
+        }catch(Exception ignored){}
+        sendCommand(IslandListenerService.ACTION_RECREATE);
+        Toast.makeText(this,"Đang khôi phục viên thuốc",Toast.LENGTH_SHORT).show();
+        draw();
     }
     private void settingButton(LinearLayout row,String label,Runnable command){
         TextView b=button(label,false,command);
