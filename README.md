@@ -1,15 +1,15 @@
-# Coin Shop v0.4 — Android local wallet
+# Coin Shop v0.5
 
-## Changes
-- Payment method is now **Coin Shop wallet only**. No PayPal UI and no "Create order" button.
-- Customers choose a coin bundle or use a fixed **custom numeric keypad** to select 1–2,500,000 coins. Displayed price refreshes as they type.
-- On wallet payment confirmation, app checks the user's VND wallet balance, deducts the displayed amount, records a local payment, and shows a green tick **Wallet payment successful**, including coin quantity and pending manual fulfillment.
-- ADM local administrator can credit the VND balance of accounts registered **on the same phone**. Balances and basic ledger are saved in app private storage.
-- On a fresh install, the first account must be named **ADM**. The administrator chooses their own password inside the app. Existing local administrators can add or reset ADM credentials through the ADMIN screen.
-- ADMIN continues to display $10 million as an **illustrative** amount, not money that can be spent.
+Language and currency display are linked:
+- Vietnamese (VI): show prices and wallet balance in **VND**.
+- English (EN): show the same amounts as **approximate USD**, formatted `≈$0.00`.
+- Indicative fixed reference: **1 USD = 25,850 VND (October 23, 2026)**. This is not a live exchange rate and is **not** an USD account.
+- Purchases and wallet balances always remain denominated **VND in local device storage**. Switching languages does not exchange, credit, or debit funds.
+- ADMIN credit amount input follows the selected language: VND integer in Vietnamese, approximate USD decimal in English (converted to VND for wallet credit).
+- Customer prices, custom-quantity sheet, wallet, checkout confirmation, success screen, orders and ADMIN balances all share one currency presentation formatter.
 
-## Important limitations
-This is a **local proof of concept**, not a real shared-wallet financial system. Accounts are NOT synchronized between phones. Local app storage can be reset, modified, or lost; do not store or sell real-money balances in this version. Only an authenticated server with ledger transactions and administrator access controls can support real customers. The app does **not** transfer or automatically provision TikTok coins; wallet payment is separate from fulfillment. The application must not be used to claim coin delivery without fulfillment.
+## Limitations
+The app currently has an **on-device offline wallet**, not a shared server wallet or a licensed payment provider. ADMIN can only manage accounts stored on the same phone. The illustrative $10 million ADMIN amount is display-only, not spendable money. Wallet payment success is only a local-wallet transaction; it does not establish TikTok coin fulfillment. Do not use this version for real customer funds.
 
-## Build
-Open the GitHub Actions run **Build APK Coin Shop**, download the `CoinShop-v0.4-debug` artifact and install `app-debug.apk`.
+## Android build
+GitHub Actions → Build APK Coin Shop → latest successful run → artifact `CoinShop-v0.5-debug` → extract `app-debug.apk`.

@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.text.InputType;
@@ -33,6 +35,8 @@ public class MainActivity extends Activity {
     private static final int PAPER=Color.WHITE, PALE=Color.rgb(241,243,247);
     private static final int INK=Color.rgb(43,57,75), MUTED=Color.rgb(106,119,136);
     private static final int PINK=Color.rgb(255,48,105), GOLD=Color.rgb(244,184,24);
+    // Fixed reference conversion for display, not an exchange/payment service.
+    private static final long VND_PER_USD=25850L;
     private static final int[] PACKS={30,100,200,500,1000};
     private static final long[] COSTS={9105,30400,60700,151800,303500};
     private SharedPreferences db;
@@ -97,7 +101,11 @@ public class MainActivity extends Activity {
         return i;
     }
     private void toast(String s){Toast.makeText(this,s,Toast.LENGTH_SHORT).show();}
-    private String fmt(long n){return String.format(Locale.US,"%,d",n).replace(',','.')+"đ";}
+    private String fmt(long n){
+        if(english)return "≈"+String.format(Locale.US,"$%,.2f",n/(double)VND_PER_USD);
+        return String.format(Locale.US,"%,d",n).replace(',','.')+"đ";
+    }
+    private String rateHint(){return tr("Số dư lưu bằng VND.","USD quy đổi tham khảo • 1 USD = 25.850 VND (23/10/2026) • ví lưu bằng VND");}
     private long price(int n){
         for(int k=0;k<PACKS.length;k++)if(PACKS[k]==n)return COSTS[k];
         return Math.round(304.0*n);
@@ -245,7 +253,8 @@ public class MainActivity extends Activity {
         add(walletCard,label(tr("VÍ COIN SHOP","COIN SHOP WALLET"),12,MUTED,true),6);
         add(walletCard,label(fmt(balance(user)),25,INK,true),6);
         add(walletCard,label(tr("Số dư nội bộ trên điện thoại này",
-            "Local wallet balance on this device"),12,MUTED,false),0);
+            "Local wallet balance on this device"),12,MUTED,false),4);
+        add(walletCard,label(rateHint(),11,MUTED,false),0);
         add(content,walletCard,13);
 
         LinearLayout packs=card();
@@ -272,7 +281,8 @@ public class MainActivity extends Activity {
         linesP.leftMargin=dp(12);w.addView(lines,linesP);
         w.addView(label("✓",23,PINK,true));
         add(pay,w,0);
-        add(content,pay,12);
+        add(content,pay,5);
+        if(english)add(content,label(rateHint(),11,MUTED,false),9);
         add(content,action(tr("THANH TOÁN • ","PAY WITH WALLET • ")+
             fmt(price(selected)),true,()->confirm()),12);
     }
@@ -388,7 +398,8 @@ public class MainActivity extends Activity {
             add(sheet,keyRow,6);
         }
         add(sheet,label(tr("Thanh toán bằng số dư ví app","Payment via Coin Shop wallet"),15,INK,true),5);
-        add(sheet,label(tr("Số dư hiện tại: ","Available: ")+fmt(balance(user)),13,MUTED,false),12);
+        add(sheet,label(tr("Số dư hiện tại: ","Available: ")+fmt(balance(user)),13,MUTED,false),4);
+        if(english)add(sheet,label(rateHint(),11,MUTED,false),8);
         proceed.setOnClickListener(v->{
             try{
                 int n=Integer.parseInt(digits.toString());
@@ -547,7 +558,8 @@ public class MainActivity extends Activity {
         LinearLayout c=card();
         add(c,label(user,19,INK,true),6);
         add(c,label(admin?"ADMIN":tr("Khách hàng","Customer"),13,MUTED,false),13);
-        add(c,label(tr("Số dư ví: ","Wallet balance: ")+fmt(balance(user)),19,INK,true),12);
+        add(c,label(tr("Số dư ví: ","Wallet balance: ")+fmt(balance(user)),19,INK,true),5);
+        if(english)add(c,label(rateHint(),11,MUTED,false),12);
         add(c,action(tr("Đổi ID TikTok","Change TikTok ID"),false,()->editRecipient()),10);
         add(c,action(tr("Đăng xuất","Sign out"),true,()->{
             db.edit().remove("session").apply();loadSession();tab="shop";render();
@@ -563,16 +575,18 @@ public class MainActivity extends Activity {
         add(stats,label("$10,000,000.00",24,INK,true),6);
         add(stats,label(tr("Số này chỉ để hiển thị, không phải tiền thật.",
             "This is display-only, not real money."),12,MUTED,false),10);
-        add(stats,label(tr("Ví ADM trên máy: ","ADM local wallet: ")+fmt(balance(user)),17,INK,true),8);
+        add(stats,label(tr("Ví ADM trên máy: ","ADM local wallet: ")+fmt(balance(user)),17,INK,true),5);
+        if(english)add(stats,label(rateHint(),11,MUTED,false),10);
         add(stats,label(tr("Số tài khoản trên máy: ","Local users: ")+users().length(),13,MUTED,false),0);
         add(content,stats,13);
 
         LinearLayout credit=card();
         add(credit,label(tr("Cộng tiền ví người dùng","Credit a user's wallet"),19,INK,true),6);
+        if(english)add(credit,label(rateHint(),11,MUTED,false),8);
         add(credit,label(tr("Chỉ áp dụng cho tài khoản tạo trên điện thoại này.",
              "Works only for accounts on this device."),12,MUTED,false),13);
         EditText who=field(tr("Tên đăng nhập nhận tiền","Recipient username"),false);
-        EditText amount=field(tr("Số tiền cộng (VND)","Credit amount (VND)"),false);
+        EditText amount=field(tr("Số tiền cộng (VND)","Credit amount (USD, e.g. 10.50)"),false);
         amount.setInputType(InputType.TYPE_CLASS_NUMBER);
         add(credit,who,9);add(credit,amount,12);
         add(credit,action(tr("CỘNG TIỀN VÀO VÍ","CREDIT WALLET"),true,()->{
@@ -582,7 +596,13 @@ public class MainActivity extends Activity {
                 toast(tr("Không tìm thấy tài khoản trên máy","Local account not found"));return;
             }
             long increment;
-            try{increment=Long.parseLong(amount.getText().toString());}catch(Exception ex){
+            try{
+                String value=amount.getText().toString().trim();
+                if(english)increment=new BigDecimal(value)
+                    .multiply(BigDecimal.valueOf(VND_PER_USD))
+                    .setScale(0,RoundingMode.HALF_UP).longValueExact();
+                else increment=Long.parseLong(value);
+            }catch(Exception ex){
                 toast(tr("Số tiền không hợp lệ","Invalid amount"));return;
             }
             if(increment<1||increment>1000000000L||balance(found.optString("name"))>900000000000L-increment){
