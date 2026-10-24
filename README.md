@@ -56,3 +56,10 @@ Once the three required secrets are configured, run GitHub Actions → **Deploy 
 
 ### GitHub Actions branch-only deployment note
 Because Coin Shop lives on the default `main` branch, the deploy workflow is intentionally kept ONLY in `trystyle-ai-online`. GitHub's **Run workflow** button may not appear when workflow_dispatch is not on the default branch. Instead this workflow starts once when changed on the TryStyle branch, and will fail with a missing-secret message if Cloudflare has not been connected. After the owner securely adds the required secrets, use that failed run's **Re-run jobs** button (or ask ChatGPT to rerun failed jobs via the connected GitHub app) to actually deploy. This does not modify Coin Shop on main.
+
+## Legacy TikXu Worker migration
+The previous TikXu project is in a separate repository. Its original APK/source code remains unchanged because the GitHub connector is not installed on that repository. **This branch now targets the original Cloudflare Worker service name `dieu-tuan-tikxu-api` in account subdomain `tukuba41007`**, preserving the original public URL **after deployment**. The Cloudflare bootstrap checks the account subdomain and stops if it differs. The TryStyle backend uses its own new D1 database `trystyle-ai` and does NOT migrate TikXu user accounts, but the source code preserves old TikXu data by not deleting old databases.
+
+**IMPORTANT:** A successful deploy will replace the API at the old TikXu URL and the old app may stop signing in. This is deliberate only because the project owner authorized retiring TikXu. The actual remote API is not changed until Cloudflare credentials are supplied and deployment succeeds. GitHub does not currently hold these credentials; no live ADM is yet active.
+
+**To install safely:** supply Cloudflare GitHub secrets to the TryStyle project and rerun the workflow. If a different account is selected, migration fails before deploy rather than silently deploying to someone else's Worker.

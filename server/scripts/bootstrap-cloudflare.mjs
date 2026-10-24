@@ -1,5 +1,5 @@
 // Runs inside GitHub Actions after a Cloudflare account has been connected by owner secrets.
-// Safe to rerun: reuses an existing "trystyle-ai" D1 database, does not change other Workers.
+// Migrates the retired TikXu Worker endpoint to TryStyle; leaves legacy D1/KV untouched.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -45,7 +45,10 @@ const subdomainInfo=await cf("/workers/subdomain");
 const subdomain=subdomainInfo?.subdomain;
 if(!/^[a-z0-9-]+$/i.test(subdomain||""))
  throw Error("Cloudflare Workers subdomain not configured. Activate workers.dev in your account.");
-const apiUrl="https://trystyle-ai-api."+subdomain+".workers.dev";
+// Explicitly require the original TikXu Cloudflare account before replacing its Worker.
+if(subdomain!=="tukuba41007")
+ throw Error("Cloudflare account subdomain differs from legacy TikXu (tukuba41007); refusing to replace an unrelated Worker");
+const apiUrl="https://dieu-tuan-tikxu-api."+subdomain+".workers.dev";
 const secretsFile=path.join(os.tmpdir(),"trystyle-worker-secrets-"+process.pid+".json");
 const secrets={ADMIN_BOOTSTRAP_PASSWORD:adminPassword};
 if(process.env.FASHN_API_KEY)secrets.FASHN_API_KEY=process.env.FASHN_API_KEY;
