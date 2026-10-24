@@ -28,7 +28,7 @@ public class MainActivity extends Activity {
   getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
   prefs=getSharedPreferences("trystyle_data",MODE_PRIVATE);
   host=prefs.getString("host","");token=prefs.getString("token","");
-  if(!token.isEmpty()){screen="home";refresh();}draw();
+  if(!token.isEmpty() && !host.isEmpty()){screen="home";refresh();}draw();
  }
  @Override public void onDestroy(){pool.shutdown();super.onDestroy();}
  GradientDrawable shape(int c,int r){GradientDrawable d=new GradientDrawable();d.setColor(c);d.setCornerRadius(dp(r));return d;}
@@ -59,8 +59,8 @@ public class MainActivity extends Activity {
   page=col();page.setPadding(dp(18),dp(24),dp(18),dp(28));sv.addView(page);
   add(page,text("TRY STYLE AI",26,WHITE,true),4);
   add(page,text("Thử đồ bằng ảnh • Thành viên online",13,MUTED,false),16);
-  if(host.isEmpty()){
-   LinearLayout c=card();add(c,text("Chưa có máy chủ online",19,PINK,true),9);
+  if(host.isEmpty() && !"config".equals(screen)){
+   LinearLayout c=card();add(c,text("Chưa kết nối máy chủ online",19,PINK,true),9);
    add(c,text("Phải triển khai Worker + D1 và nhập URL thật. Chưa thể đăng ký chung nhiều máy khi chưa triển khai.",13,MUTED,false),12);
    add(c,button("CẤU HÌNH MÁY CHỦ",true,()->{screen="config";draw();}),0);add(page,c,13);
   }
@@ -74,7 +74,7 @@ public class MainActivity extends Activity {
   else if("job".equals(screen))jobPage();
   else homePage();
   add(page,button("ĐĂNG XUẤT",false,()->{token="";user=null;prefs.edit().remove("token").apply();screen="auth";draw();}),8);
-  add(page,button("CẤU HÌNH MÁY CHỦ",false,()->{screen="config";draw();}),0);
+  if(isAdmin())add(page,button("CÀI ĐẶT MÁY CHỦ (ADM)",false,()->{screen="config";draw();}),0);
  }
  void config(){
   LinearLayout c=card();add(c,text("Địa chỉ API máy chủ",20,WHITE,true),8);
@@ -83,12 +83,24 @@ public class MainActivity extends Activity {
   add(c,button("KIỂM TRA VÀ LƯU",true,()->{
    String s=e.getText().toString().trim().replaceAll("/+$","");
    if(!s.matches("https://[A-Za-z0-9._:-]+")){toast("URL HTTPS không hợp lệ");return;}
-   host=s;token="";user=null;prefs.edit().putString("host",s).remove("token").apply();
+   // Only persist the URL after a genuine TryStyle AI health response.
+   final String previousHost=host;
+   host=s;
    api("GET","/api/health",null,(j,err)->{
-    if(err!=null){toast(err);screen="config";}else{toast("Máy chủ đã sẵn sàng");screen="auth";}draw();
+    if(err!=null || !j.optBoolean("ok",false) || !"TryStyle AI".equals(j.optString("service"))){
+     host=previousHost;
+     toast(err!=null?err:"Đây không phải máy chủ TryStyle AI");
+     screen="config";
+    }else{
+     token="";user=null;
+     prefs.edit().putString("host",s).remove("token").apply();
+     toast("Đã kết nối máy chủ. Cấu hình đã được ẩn.");
+     screen="auth";
+    }
+    draw();
    });
   }),10);
-  add(c,button("QUAY LẠI",false,()->{screen="auth";draw();}),0);add(page,c,12);
+  add(c,button("QUAY LẠI",false,()->{screen=user==null?"auth":"home";draw();}),0);add(page,c,12);
  }
  void auth(){
   LinearLayout c=card();add(c,text("Đăng nhập / Tự đăng ký",22,WHITE,true),8);
@@ -97,7 +109,7 @@ public class MainActivity extends Activity {
   add(c,name,10);add(c,pass,13);
   add(c,button("ĐĂNG NHẬP",true,()->login(false,name,pass)),9);
   add(c,button("ĐĂNG KÝ THÀNH VIÊN",false,()->login(true,name,pass)),9);
-  add(c,button("CẤU HÌNH MÁY CHỦ",false,()->{screen="config";draw();}),0);add(page,c,12);
+  if(host.isEmpty())add(c,button("CẤU HÌNH MÁY CHỦ",false,()->{screen="config";draw();}),0);add(page,c,12);
  }
  void login(boolean create,EditText name,EditText pass){
   if(host.isEmpty()){screen="config";draw();return;}

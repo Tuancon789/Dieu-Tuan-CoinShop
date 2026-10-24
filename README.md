@@ -29,3 +29,6 @@ GitHub Actions on branch trystyle-ai-online: Build TryStyle AI Online APK, artif
 
 ## Optional GitHub Actions deployment
 After setting real D1 database ID in server/wrangler.toml, set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as GitHub Actions secrets. Set ADMIN_BOOTSTRAP_PASSWORD on Cloudflare using Wrangler secret put. On the trystyle-ai-online branch, manually trigger the workflow Deploy TryStyle Cloudflare API. This runs migrations and deploys, but only after you connect Cloudflare credentials.
+
+## Setup UI in version 1.0.1
+When a new user installs the APK, the Worker URL setup is shown only until the entered HTTPS URL passes the TryStyle AI health verification. The app then hides the setup warning and skips it on subsequent launches. A server change entry remains on the signed-in ADM screen. The ADM account is not created in Android: it is securely seeded on the **deployed** Cloudflare D1 backend after setting ADMIN_BOOTSTRAP_PASSWORD as a Worker secret; source code, GitHub, and local Android setup alone do not activate an online ADM.
