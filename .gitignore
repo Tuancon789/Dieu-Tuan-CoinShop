@@ -2,5 +2,7 @@
 .idea/
 local.properties
 **/build/
+node_modules/
+.dev.vars
+.env
 *.iml
-.DS_Store

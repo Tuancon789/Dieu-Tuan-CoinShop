@@ -1,0 +1,10 @@
+name = "trystyle-ai-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# After creating D1, replace the database_id below with its real ID.
+[[d1_databases]]
+binding = "DB"
+database_name = "trystyle-ai"
+database_id = "REPLACE_WITH_REAL_D1_DATABASE_ID"
+migrations_dir = "migrations"
