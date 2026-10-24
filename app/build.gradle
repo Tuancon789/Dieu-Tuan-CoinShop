@@ -2,8 +2,8 @@ plugins { id 'com.android.application' }
 android {
  namespace 'vn.dieutuan.trystyle'
  compileSdk 35
- defaultConfig { applicationId 'vn.dieutuan.trystyle'; minSdk 26; targetSdk 34; versionCode 3; versionName '1.0.2-online'
-   resValue 'string', 'default_api_url', (System.getenv('TRY_STYLE_API_URL') ?: '')
+ defaultConfig { applicationId 'vn.dieutuan.trystyle'; minSdk 26; targetSdk 34; versionCode 4; versionName '1.0.3-online'
+   resValue 'string', 'default_api_url', (System.getenv('TRY_STYLE_API_URL') ?: 'https://dieu-tuan-tikxu-api.tukuba41007.workers.dev')
  }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }

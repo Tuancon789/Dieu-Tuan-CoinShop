@@ -18,7 +18,8 @@ import java.util.concurrent.*;
 public class MainActivity extends Activity {
  static final int BG=0xff101225,CARD=0xff242742,WHITE=0xfff9f7ff,MUTED=0xffb9c0d9,PINK=0xffff74a7;
  final ExecutorService pool=Executors.newSingleThreadExecutor();
- SharedPreferences prefs; String host="",token="",screen="auth",activeJob="";
+ SharedPreferences prefs; String host="",token="",screen="auth",activeJob="",serverStatus="Đang kiểm tra máy chủ...";
+ boolean verifiedServer=false;
  JSONObject user=null; JSONArray members=new JSONArray(),jobs=new JSONArray();
  Bitmap person,cloth,result; boolean agreed=false,aiReady=false;
  LinearLayout page;
@@ -30,7 +31,9 @@ public class MainActivity extends Activity {
   String savedHost=prefs.getString("host","");
   host=savedHost.isEmpty()?getString(R.string.default_api_url).trim():savedHost;
   token=prefs.getString("token","");
-  if(!token.isEmpty() && !host.isEmpty()){screen="home";refresh();}draw();
+  if(!token.isEmpty() && !host.isEmpty()){screen="home";refresh();}
+  if(!host.isEmpty())verifyServer();
+  draw();
  }
  @Override public void onDestroy(){pool.shutdown();super.onDestroy();}
  GradientDrawable shape(int c,int r){GradientDrawable d=new GradientDrawable();d.setColor(c);d.setCornerRadius(dp(r));return d;}
@@ -56,6 +59,22 @@ public class MainActivity extends Activity {
  }
  void toast(String s){Toast.makeText(this,s,Toast.LENGTH_LONG).show();}
  boolean isAdmin(){return user!=null&&"admin".equals(user.optString("role"));}
+ void verifyServer(){
+  if(host.isEmpty()){
+   verifiedServer=false;serverStatus="Chưa cấu hình máy chủ.";draw();return;
+  }
+  serverStatus="Đang kiểm tra máy chủ TryStyle...";
+  api("GET","/api/health",null,(j,err)->{
+   if(err!=null || !j.optBoolean("ok",false) || !"TryStyle AI".equals(j.optString("service"))){
+    verifiedServer=false;
+    serverStatus="API TikXu cũ chưa được triển khai thành TryStyle AI. Máy chủ cần cập nhật trước khi đăng nhập/đăng ký.";
+   }else{
+    verifiedServer=true;
+    serverStatus="";
+   }
+   draw();
+  });
+ }
  void draw(){
   ScrollView sv=new ScrollView(this);sv.setBackgroundColor(BG);setContentView(sv);
   page=col();page.setPadding(dp(18),dp(24),dp(18),dp(28));sv.addView(page);
@@ -91,10 +110,12 @@ public class MainActivity extends Activity {
    api("GET","/api/health",null,(j,err)->{
     if(err!=null || !j.optBoolean("ok",false) || !"TryStyle AI".equals(j.optString("service"))){
      host=previousHost;
-     toast(err!=null?err:"Đây không phải máy chủ TryStyle AI");
+     verifiedServer=false;
+     serverStatus="Server này chưa chạy API TryStyle AI.";
+     toast(err!=null?err:"Đây chưa phải máy chủ TryStyle AI");
      screen="config";
     }else{
-     token="";user=null;
+     token="";user=null;verifiedServer=true;serverStatus="";
      prefs.edit().putString("host",s).remove("token").apply();
      toast("Đã kết nối máy chủ. Cấu hình đã được ẩn.");
      screen="auth";
@@ -107,6 +128,10 @@ public class MainActivity extends Activity {
  void auth(){
   LinearLayout c=card();add(c,text("Đăng nhập / Tự đăng ký",22,WHITE,true),8);
   add(c,text("Tài khoản thành viên tự tạo. ADM được tạo riêng trên máy chủ, không cho đăng ký qua app.",13,MUTED,false),12);
+  if(!verifiedServer){
+   add(c,text(serverStatus.isEmpty()?"Chưa xác minh máy chủ":serverStatus,13,PINK,true),9);
+   add(c,button("KIỂM TRA KẾT NỐI",false,()->verifyServer()),12);
+  }
   EditText name=field("Tên tài khoản (3–24 ký tự)",false),pass=field("Mật khẩu (10+ ký tự)",true);
   add(c,name,10);add(c,pass,13);
   add(c,button("ĐĂNG NHẬP",true,()->login(false,name,pass)),9);
@@ -115,6 +140,7 @@ public class MainActivity extends Activity {
  }
  void login(boolean create,EditText name,EditText pass){
   if(host.isEmpty()){screen="config";draw();return;}
+  if(!verifiedServer){toast("Chưa có API TryStyle thật. Không gửi mật khẩu lên server TikXu cũ.");verifyServer();return;}
   JSONObject data=new JSONObject();
   try{data.put("username",name.getText().toString().trim());data.put("password",pass.getText().toString());}catch(Exception ignored){}
   api("POST",create?"/api/register":"/api/login",data,(j,e)->{
