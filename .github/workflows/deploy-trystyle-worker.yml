@@ -1,6 +1,10 @@
 name: Deploy TryStyle Server and Ready-to-Use APK
 on:
   workflow_dispatch:
+  push:
+    branches: [trystyle-ai-online]
+    paths:
+      - '.github/workflows/deploy-trystyle-worker.yml'
 permissions:
   contents: read
 jobs:

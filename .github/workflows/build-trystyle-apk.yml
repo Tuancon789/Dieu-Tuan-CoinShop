@@ -18,6 +18,8 @@ jobs:
       - name: Validate backend JavaScript and D1 SQL migration
         run: |
           node --check server/src/index.js
+          node --check server/scripts/bootstrap-cloudflare.mjs
+          node --check server/scripts/verify-deployment.mjs
           python3 - <<'PY'
           import sqlite3
           db=sqlite3.connect(":memory:")
