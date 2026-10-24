@@ -35,7 +35,15 @@ jobs:
         with:
           gradle-version: '8.9'
       - name: Build debug APK
-        run: gradle :app:assembleDebug --no-daemon --stacktrace
+        env:
+          TRY_STYLE_API_URL: ${{ vars.TRYSTYLE_API_URL }}
+        run: |
+          if [ -n "$TRY_STYLE_API_URL" ]; then
+            case "$TRY_STYLE_API_URL" in https://*) echo "Configured HTTPS API URL";; *) echo "TRYSTYLE_API_URL must be HTTPS"; exit 1;; esac
+          else
+            echo "TRYSTYLE_API_URL not configured yet: app will show manual server setup."
+          fi
+          gradle :app:assembleDebug --no-daemon --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: TryStyleAI-Online-v1-debug

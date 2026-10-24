@@ -27,7 +27,9 @@ public class MainActivity extends Activity {
  @Override public void onCreate(Bundle s){super.onCreate(s);
   getWindow().setStatusBarColor(BG);getWindow().setNavigationBarColor(BG);
   prefs=getSharedPreferences("trystyle_data",MODE_PRIVATE);
-  host=prefs.getString("host","");token=prefs.getString("token","");
+  String savedHost=prefs.getString("host","");
+  host=savedHost.isEmpty()?getString(R.string.default_api_url).trim():savedHost;
+  token=prefs.getString("token","");
   if(!token.isEmpty() && !host.isEmpty()){screen="home";refresh();}draw();
  }
  @Override public void onDestroy(){pool.shutdown();super.onDestroy();}

@@ -32,3 +32,12 @@ After setting real D1 database ID in server/wrangler.toml, set CLOUDFLARE_API_TO
 
 ## Setup UI in version 1.0.1
 When a new user installs the APK, the Worker URL setup is shown only until the entered HTTPS URL passes the TryStyle AI health verification. The app then hides the setup warning and skips it on subsequent launches. A server change entry remains on the signed-in ADM screen. The ADM account is not created in Android: it is securely seeded on the **deployed** Cloudflare D1 backend after setting ADMIN_BOOTSTRAP_PASSWORD as a Worker secret; source code, GitHub, and local Android setup alone do not activate an online ADM.
+
+## Bundled server URL — version 1.0.2
+Set repository **Settings → Secrets and variables → Actions → Variables → New repository variable**:
+- Name: `TRYSTYLE_API_URL`
+- Value: your **actual deployed** TryStyle AI HTTPS Cloudflare Worker URL, e.g. `https://your-worker.workers.dev` (do not reuse unrelated TikXu API).
+
+Re-run the **Build TryStyle AI Online APK** workflow on `trystyle-ai-online`. The Gradle build embeds the public Worker URL as an Android string resource; app preselects that URL and goes straight to sign-in. The setup warning is invisible when a URL is configured. Public API endpoint URLs are not secrets; only the server holds passwords/AI tokens.
+
+When this GitHub variable is not configured, APK necessarily opens the configuration screen. This code does not make up a server URL or activate ADM by itself. To activate ADM, deploy Worker with D1 and set the private Cloudflare Worker secret `ADMIN_BOOTSTRAP_PASSWORD` to a unique strong password before the first protected request.
