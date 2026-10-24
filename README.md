@@ -26,3 +26,6 @@ FASHN integration: https://docs.fashn.ai/api-reference/tryon-v1-6
 
 ## Android build
 GitHub Actions on branch trystyle-ai-online: Build TryStyle AI Online APK, artifact TryStyleAI-Online-v1-debug, app-debug.apk.
+
+## Optional GitHub Actions deployment
+After setting real D1 database ID in server/wrangler.toml, set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as GitHub Actions secrets. Set ADMIN_BOOTSTRAP_PASSWORD on Cloudflare using Wrangler secret put. On the trystyle-ai-online branch, manually trigger the workflow Deploy TryStyle Cloudflare API. This runs migrations and deploys, but only after you connect Cloudflare credentials.

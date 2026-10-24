@@ -15,6 +15,18 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Validate backend JavaScript and D1 SQL migration
+        run: |
+          node --check server/src/index.js
+          python3 - <<'PY'
+          import sqlite3
+          db=sqlite3.connect(":memory:")
+          db.executescript(open("server/migrations/0001_initial.sql", encoding="utf8").read())
+          expected={"users","sessions","tryons"}
+          tables={x[0] for x in db.execute("select name from sqlite_master where type='table'")}
+          assert expected.issubset(tables), tables
+          print("Backend JS and D1 schema validation passed")
+          PY
       - name: Install Android SDK 35
         run: |
           export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/cmdline-tools/16.0/bin:$PATH"
