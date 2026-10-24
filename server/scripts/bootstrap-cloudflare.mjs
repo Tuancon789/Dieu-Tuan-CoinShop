@@ -32,8 +32,14 @@ if(!database){
 if(!/^[0-9a-fA-F-]{36}$/.test(database?.uuid||""))throw Error("Cloudflare D1 database ID missing");
 const wranglerPath=path.resolve(path.dirname(fileURLToPath(import.meta.url)),"../wrangler.toml");
 let config=fs.readFileSync(wranglerPath,"utf8");
-if(!/database_id\s*=\s*"[^"]+"/.test(config))throw Error("Missing D1 database_id in Wrangler config");
-config=config.replace(/database_id\s*=\s*"[^"]+"/",'database_id = "'+database.uuid+'"');
+let foundId=false;
+config=config.split("\n").map(line=>{
+ if(line.trim().startsWith("database_id =")){
+  foundId=true;return 'database_id = "'+database.uuid+'"';
+ }
+ return line;
+}).join("\n");
+if(!foundId)throw Error("Missing D1 database_id in Wrangler config");
 fs.writeFileSync(wranglerPath,config);
 const subdomainInfo=await cf("/workers/subdomain");
 const subdomain=subdomainInfo?.subdomain;
