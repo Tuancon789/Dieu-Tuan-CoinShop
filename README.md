@@ -41,3 +41,15 @@ Set repository **Settings → Secrets and variables → Actions → Variables �
 Re-run the **Build TryStyle AI Online APK** workflow on `trystyle-ai-online`. The Gradle build embeds the public Worker URL as an Android string resource; app preselects that URL and goes straight to sign-in. The setup warning is invisible when a URL is configured. Public API endpoint URLs are not secrets; only the server holds passwords/AI tokens.
 
 When this GitHub variable is not configured, APK necessarily opens the configuration screen. This code does not make up a server URL or activate ADM by itself. To activate ADM, deploy Worker with D1 and set the private Cloudflare Worker secret `ADMIN_BOOTSTRAP_PASSWORD` to a unique strong password before the first protected request.
+
+## One-run online activation + preconfigured Android APK
+The workflow **Deploy TryStyle Server and Ready-to-Use APK** automatically creates/reuses a D1 database, runs migration, deploys a NEW named TryStyle Worker, saves encrypted Worker secrets, logs in as ADM once to prove account activation, then compiles an APK that already knows its Worker URL. It never changes the unrelated TikXu Worker or Coin Shop project.
+
+To authorize this deployment, the owner must add three values under GitHub repository **Settings → Secrets and variables → Actions → Repository secrets**:
+- `CLOUDFLARE_ACCOUNT_ID` — your 32-character Cloudflare account ID.
+- `CLOUDFLARE_API_TOKEN` — a scoped Cloudflare token with Workers Scripts edit, D1 edit and subdomain read permissions. Do not expose it in chats or code.
+- `ADMIN_BOOTSTRAP_PASSWORD` — a long **private** initial ADM login password, 10–128 characters. This is not stored in APK or repository source.
+
+Optional fourth GitHub secret `FASHN_API_KEY` enables paid image generation. When missing, registration and ADM work after deployment, but the image generation UI states the AI is not configured.
+
+Once the three required secrets are configured, run GitHub Actions → **Deploy TryStyle Server and Ready-to-Use APK** → Run workflow → branch `trystyle-ai-online`. The run produces `TryStyleAI-Online-Connected-APK`; it has the actual URL prefilled. Download/unzip to install `app-debug.apk`. If the account has not activated a workers.dev subdomain, enable it in Cloudflare first. You may need to confirm billing/free-plan limits and authorize access with Cloudflare. Never paste tokens or passwords to ChatGPT.
