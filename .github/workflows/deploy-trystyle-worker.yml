@@ -5,6 +5,7 @@ on:
     branches: [trystyle-ai-online]
     paths:
       - '.github/workflows/deploy-trystyle-worker.yml'
+      - 'server/scripts/**'
 permissions:
   contents: read
 jobs:
